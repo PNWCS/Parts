@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35707.178 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QB_Items_CLI", "QB_Items_CLI\QB_Items_CLI.csproj", "{4E1F417A-6C2F-4D0D-8D21-55BEC8744B95}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QB_Items_Lib", "QB_Items_Lib\QB_Items_Lib.csproj", "{BE0775A4-6AA9-4F2C-B776-5B177F12DF47}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QB_Items_Test", "QB_Items_Test\QB_Items_Test.csproj", "{AD27AA3F-1B6F-4C48-876F-E5AA129E0798}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4E1F417A-6C2F-4D0D-8D21-55BEC8744B95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E1F417A-6C2F-4D0D-8D21-55BEC8744B95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E1F417A-6C2F-4D0D-8D21-55BEC8744B95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E1F417A-6C2F-4D0D-8D21-55BEC8744B95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BE0775A4-6AA9-4F2C-B776-5B177F12DF47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE0775A4-6AA9-4F2C-B776-5B177F12DF47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE0775A4-6AA9-4F2C-B776-5B177F12DF47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE0775A4-6AA9-4F2C-B776-5B177F12DF47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD27AA3F-1B6F-4C48-876F-E5AA129E0798}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD27AA3F-1B6F-4C48-876F-E5AA129E0798}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD27AA3F-1B6F-4C48-876F-E5AA129E0798}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD27AA3F-1B6F-4C48-876F-E5AA129E0798}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
