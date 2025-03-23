@@ -1,12 +1,12 @@
+using QB_Items_Lib;
+using QBFC16Lib;
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Serilog;
-using QB_Items_Lib;  // Assumes Item, ItemReader, AppConfig, etc. are defined here.
-using QBFC16Lib;             // For QuickBooks session and API interaction.
 using Xunit;
 using static QB_Items_Test.CommonMethods;
-using QB_Items_Test;
 
 namespace QB_Items_Test
 {
@@ -18,7 +18,7 @@ namespace QB_Items_Test
         {
             const int ITEM_COUNT = 5;
             const int STARTING_COMPANY_ID = 100;
-            var itemsToAdd = new List<Item>();
+            var itemsToAdd = new List<Item>(ITEM_COUNT); // Pre-allocate capacity
 
             // 1) Ensure Serilog has released file access before deleting old logs.
             EnsureLogFileClosed();
@@ -29,7 +29,7 @@ namespace QB_Items_Test
             // Each item has a random name, a sales price, and a manufacturer's part number (used as company id).
             for (int i = 0; i < ITEM_COUNT; i++)
             {
-                string randomName = "TestItem_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+                string randomName = "TestItem_" + Guid.NewGuid().ToString("N")[..8];
                 int companyID = STARTING_COMPANY_ID + i;
                 // For this test, sales price is set to a base plus the index (for uniqueness).
                 decimal salesPrice = 100.00m + i;
@@ -92,21 +92,30 @@ namespace QB_Items_Test
             }
         }
 
-        private string AddItem(QuickBooksSession qbSession, string name, decimal salesPrice, string manufacturerPartNumber)
+        private static string AddItem(QuickBooksSession qbSession, string name, decimal salesPrice, string manufacturerPartNumber)
         {
             IMsgSetRequest requestMsgSet = qbSession.CreateRequestSet();
             // Create the item add request.
-            IItemAddRq itemAddRq = requestMsgSet.AppendItemInventoryAddRq();
+            IItemInventoryAdd itemAddRq = requestMsgSet.AppendItemInventoryAddRq();
             itemAddRq.Name.SetValue(name);
-            itemAddRq.SalesPrice.SetValue(salesPrice);
+            // Convert decimal to double for QuickBooks SDK
+            itemAddRq.SalesPrice.SetValue((double)salesPrice);
             itemAddRq.ManufacturerPartNumber.SetValue(manufacturerPartNumber);
             // Additional item fields can be set here as needed.
+            // Set the income account reference
+            itemAddRq.IncomeAccountRef.FullName.SetValue("Sales");
+
+            // Set the asset account reference
+            itemAddRq.AssetAccountRef.FullName.SetValue("Inventory Asset");
+
+            // Set the COGS account reference
+            itemAddRq.COGSAccountRef.FullName.SetValue("Cost of Goods Sold"); // Replace "Cost of Goods Sold" with the appropriate COGS account name
 
             IMsgSetResponse responseMsgSet = qbSession.SendRequest(requestMsgSet);
             return ExtractListIDFromResponse(responseMsgSet);
         }
 
-        private string ExtractListIDFromResponse(IMsgSetResponse responseMsgSet)
+        private static string ExtractListIDFromResponse(IMsgSetResponse responseMsgSet)
         {
             IResponseList responseList = responseMsgSet.ResponseList;
             if (responseList == null || responseList.Count == 0)
@@ -116,16 +125,22 @@ namespace QB_Items_Test
             if (response.StatusCode != 0)
                 throw new Exception($"ItemAdd failed: {response.StatusMessage}");
 
-            // Attempt to cast the response detail to IItemRet.
-            IItemRet? itemRet = response.Detail as IItemRet;
-            if (itemRet == null)
-                throw new Exception("No IItemRet returned after adding Item.");
-
-            return itemRet.ListID?.GetValue()
-                ?? throw new Exception("ListID is missing in QuickBooks response.");
+            // Check what type of response we're getting
+            if (response.Detail is IItemInventoryRet inventoryRet)
+            {
+                return inventoryRet.ListID.GetValue();
+            }
+            else if (response.Detail is IItemNonInventoryRet nonInventoryRet)
+            {
+                return nonInventoryRet.ListID.GetValue();
+            }
+            else
+            {
+                throw new Exception("Unexpected response type after adding Item.");
+            }
         }
 
-        private void DeleteItem(QuickBooksSession qbSession, string listID)
+        private static void DeleteItem(QuickBooksSession qbSession, string listID)
         {
             IMsgSetRequest requestMsgSet = qbSession.CreateRequestSet();
             IListDel listDelRq = requestMsgSet.AppendListDelRq();
@@ -136,7 +151,7 @@ namespace QB_Items_Test
             WalkListDelResponse(responseMsgSet, listID);
         }
 
-        private void WalkListDelResponse(IMsgSetResponse responseMsgSet, string listID)
+        private static void WalkListDelResponse(IMsgSetResponse responseMsgSet, string listID)
         {
             IResponseList responseList = responseMsgSet.ResponseList;
             if (responseList == null || responseList.Count == 0)
