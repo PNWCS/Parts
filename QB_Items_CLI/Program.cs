@@ -1,11 +1,11 @@
-﻿using QB_Items_Lib;  // Import the Lib namespace
+﻿using QB_Items_Lib; // Correct namespace for Item and AppConfig
 using Serilog;
 
 namespace QB_Items_CLI
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             // Configure logging
             LoggerConfig.ConfigureLogging();
@@ -17,14 +17,9 @@ namespace QB_Items_CLI
                 // Query all items from QuickBooks using the ItemReader
                 var items = ItemReader.QueryAllItems();
 
-                if (items == null)
+                if (items == null || items.Count == 0) // Prefer Count over Any() for clarity and performance
                 {
-                    Log.Warning("QueryAllItems returned null. No items fetched.");
-                    Console.WriteLine("No items were retrieved.");
-                }
-                else if (!items.Any())  // Check if list is empty
-                {
-                    Log.Warning("QueryAllItems returned an empty list.");
+                    Log.Warning("No items were retrieved from QuickBooks.");
                     Console.WriteLine("No items found.");
                 }
                 else
@@ -50,3 +45,5 @@ namespace QB_Items_CLI
         }
     }
 }
+
+

@@ -2,10 +2,6 @@
 using QBFC16Lib;
 using QB_Items_CLI; // Assuming LoggerConfig is in this namespace
 
-
-
-
-
 namespace QB_Items_Test
 {
     public class CommonMethods

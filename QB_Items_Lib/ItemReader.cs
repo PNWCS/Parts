@@ -10,15 +10,15 @@ namespace QB_Items_Lib
         {
             Log.Information("ItemReader Initialized");
 
-            List<Item> items = new List<Item>();
+            var items = new List<Item>(); // Simplified collection initialization
             bool sessionBegun = false;
             bool connectionOpen = false;
-            QBSessionManager sessionManager = null;
+            QBSessionManager? sessionManager = null;
 
             try
             {
                 // Create the session Manager object
-                sessionManager = new QBSessionManager();
+                sessionManager = new();
 
                 // Create the message set request object to hold our request
                 IMsgSetRequest requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
@@ -48,11 +48,11 @@ namespace QB_Items_Lib
             catch (Exception e)
             {
                 Log.Error("Error while querying items from QuickBooks: " + e.Message);
-                if (sessionBegun)
+                if (sessionBegun && sessionManager != null)
                 {
                     sessionManager.EndSession();
                 }
-                if (connectionOpen)
+                if (connectionOpen && sessionManager != null)
                 {
                     sessionManager.CloseConnection();
                 }
@@ -76,13 +76,13 @@ namespace QB_Items_Lib
         }
 
         // Process the response and map it to a list of Items
-        private static List<Item> WalkItemInventoryQueryRs(IMsgSetResponse responseMsgSet)
+        private static List<Item> WalkItemInventoryQueryRs(IMsgSetResponse? responseMsgSet)
         {
-            List<Item> items = new List<Item>();
+            var items = new List<Item>(); // Simplified collection initialization
 
             if (responseMsgSet == null) return items;
 
-            IResponseList responseList = responseMsgSet.ResponseList;
+            IResponseList? responseList = responseMsgSet.ResponseList;
             if (responseList == null) return items;
 
             for (int i = 0; i < responseList.Count; i++)
@@ -105,9 +105,9 @@ namespace QB_Items_Lib
         }
 
         // Map the IItemInventoryRetList to Item objects
-        private static List<Item> WalkItemInventoryRet(IItemInventoryRetList ItemInventoryRetList)
+        private static List<Item> WalkItemInventoryRet(IItemInventoryRetList? ItemInventoryRetList)
         {
-            List<Item> items = new List<Item>();
+            var items = new List<Item>(); // Simplified collection initialization
 
             if (ItemInventoryRetList == null) return items;
 
@@ -121,9 +121,7 @@ namespace QB_Items_Lib
                 string listID = itemInventoryRet.ListID.GetValue();
 
                 // Create Item object and add it to the list
-                var item = new Item(name, salesPrice, manufacturerPartNumber);
-                item.QB_ID = listID; // Set the QuickBooks ListID
-
+                var item = new Item(name, salesPrice, manufacturerPartNumber) { QB_ID = listID };
                 items.Add(item);
 
                 Log.Information($"Successfully retrieved {name} from QB");
