@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "QB_Items_CLI": {
+      "commandName": "Project",
+      "commandLineArgs": "compare\r\n"
+    }
+  }
+}

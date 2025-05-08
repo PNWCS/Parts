@@ -101,7 +101,7 @@ namespace QB_Items_Test
             // Convert decimal to double for QuickBooks SDK
             itemAddRq.SalesPrice.SetValue((double)salesPrice);
             itemAddRq.ManufacturerPartNumber.SetValue(manufacturerPartNumber);
-            // Additional item fields can be set here as needed.
+
             // Set the income account reference
             itemAddRq.IncomeAccountRef.FullName.SetValue("Sales");
 
@@ -109,7 +109,7 @@ namespace QB_Items_Test
             itemAddRq.AssetAccountRef.FullName.SetValue("Inventory Asset");
 
             // Set the COGS account reference
-            itemAddRq.COGSAccountRef.FullName.SetValue("Cost of Goods Sold"); // Replace "Cost of Goods Sold" with the appropriate COGS account name
+            itemAddRq.COGSAccountRef.FullName.SetValue("Cost of Goods Sold");
 
             IMsgSetResponse responseMsgSet = qbSession.SendRequest(requestMsgSet);
             return ExtractListIDFromResponse(responseMsgSet);
@@ -117,7 +117,7 @@ namespace QB_Items_Test
 
         private static string ExtractListIDFromResponse(IMsgSetResponse responseMsgSet)
         {
-            IResponseList responseList = responseMsgSet.ResponseList;
+            IResponseList? responseList = responseMsgSet.ResponseList;
             if (responseList == null || responseList.Count == 0)
                 throw new Exception("No response from ItemAddRq.");
 
@@ -153,7 +153,7 @@ namespace QB_Items_Test
 
         private static void WalkListDelResponse(IMsgSetResponse responseMsgSet, string listID)
         {
-            IResponseList responseList = responseMsgSet.ResponseList;
+            IResponseList? responseList = responseMsgSet.ResponseList;
             if (responseList == null || responseList.Count == 0)
                 return;
 
