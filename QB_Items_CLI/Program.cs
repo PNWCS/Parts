@@ -1,5 +1,11 @@
+<<<<<<< HEAD
 ﻿using QB_Items_Lib; // Correct namespace for Item and AppConfig
 using Serilog;
+=======
+﻿using System;
+using QB_Items_Lib;
+using QBFC16Lib;
+>>>>>>> d65a978 (deleted requested folder)
 
 namespace QB_Items_CLI
 {
@@ -7,16 +13,26 @@ namespace QB_Items_CLI
     {
         static void Main()
         {
-            // Configure logging
-            LoggerConfig.ConfigureLogging();
+            Console.WriteLine("QB Items CLI - Command Line Interface for QuickBooks Item Management");
+            Console.WriteLine("=====================================================================");
 
-            try
+            if (args.Length == 0)
             {
-                Log.Information("Starting QuickBooks item query...");
+                Console.WriteLine("Usage:");
+                Console.WriteLine("  query                       - Query all items from QuickBooks");
+                Console.WriteLine("  add [csvPath]               - Add items to QuickBooks from CSV");
+                Console.WriteLine("  compare                     - Compare CSV data with QuickBooks and add missing items");
+                return;
+            }
 
-                // Query all items from QuickBooks using the ItemReader
+            string command = args[0].ToLower();
+
+            if (command == "query")
+            {
+                Console.WriteLine("Querying all items from QuickBooks...");
                 var items = ItemReader.QueryAllItems();
 
+<<<<<<< HEAD
                 if (items == null || items.Count == 0) // Prefer Count over Any() for clarity and performance
                 {
                     Log.Warning("No items were retrieved from QuickBooks.");
@@ -31,17 +47,67 @@ namespace QB_Items_CLI
                             item.Name, item.SalesPrice, item.ManufacturerPartNumber);
                         Console.WriteLine($"Item Name: {item.Name}, SalesPrice: {item.SalesPrice}, ManufacturerPartNumber: {item.ManufacturerPartNumber}");
                     }
+=======
+                Console.WriteLine("\nItems from QuickBooks:");
+                foreach (var item in items)
+                {
+                    Console.WriteLine($"- {item.Name} | SalesPrice: {item.SalesPrice} | ManufacturerPartNumber: {item.ManufacturerPartNumber}");
+>>>>>>> d65a978 (deleted requested folder)
                 }
             }
-            catch (Exception ex)
+            else if (command == "add")
             {
-                Log.Error(ex, "An error occurred while querying QuickBooks items.");
-                Console.WriteLine($"An error occurred: {ex.Message}");
+                if (args.Length < 2)
+                {
+                    Console.WriteLine("Usage: add [csvPath]");
+                    return;
+                }
+
+                string csvPath = args[1];
+
+                Console.WriteLine($"Adding items from {csvPath}...");
+                var items = ItemComparator.ReadItemsFromCSV(csvPath);
+
+                var sessionManager = new QBSessionManager();
+                try
+                {
+                    sessionManager.OpenConnection("", AppConfig.QB_APP_NAME);
+                    sessionManager.BeginSession("", ENOpenMode.omDontCare);
+
+                    ItemAdder.AddItems(items, sessionManager);
+                }
+                finally
+                {
+                    sessionManager.EndSession();
+                    sessionManager.CloseConnection();
+                }
+
+                Console.WriteLine("Items added successfully.");
             }
-            finally
+            else if (command == "compare")
             {
-                LoggerConfig.ResetLogger();
+                string csvPath = @"C:\Users\SreekurmamN\comparator\Parts-new\Parts-new\TestItems.csv";
+
+                try
+                {
+                    Console.WriteLine($"Comparing items between CSV and QuickBooks...");
+
+                    var csvItems = ItemComparator.ReadItemsFromCSV(csvPath);
+                    var comparisonResults = ItemComparator.CompareWithQuickBooks(csvItems);
+                    ItemComparator.AddMissingItemsToQuickBooks(comparisonResults);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error during comparison: {ex.Message}");
+                }
             }
+            else
+            {
+                Console.WriteLine("Unknown command.");
+            }
+
+            Console.WriteLine("\nProcess complete. Press any key to exit.");
+            Console.ReadKey();
         }
     }
 }
