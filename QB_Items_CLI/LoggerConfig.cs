@@ -28,6 +28,4 @@ namespace QB_Items_CLI
             Log.CloseAndFlush();
         }
     }
-
-
 }
