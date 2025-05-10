@@ -2,6 +2,6 @@
 {
     public static class AppConfig
     {
-        public static string QB_APP_NAME = "QBSync";
+        public const string QB_APP_NAME = "QBSync";
     }
 }

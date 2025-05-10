@@ -1,52 +1,27 @@
-﻿using QB_Items_Lib;  // Import the Lib namespace
+﻿using QB_Items_Lib;
 using Serilog;
+using System;
+using System.Collections.Generic;
 
 namespace QB_Items_CLI
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            // Configure logging
-            LoggerConfig.ConfigureLogging();
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console()
+                .WriteTo.File("cli-log.txt", rollingInterval: RollingInterval.Day)
+                .CreateLogger();
 
-            try
+            var items = new List<Item>
             {
-                Log.Information("Starting QuickBooks item query...");
+                new Item("SampleItem1", 150, "MPN150"),
+                new Item("SampleItem2", 220, "MPN220")
+            };
 
-                // Query all items from QuickBooks using the ItemReader
-                var items = ItemReader.QueryAllItems();
-
-                if (items == null)
-                {
-                    Log.Warning("QueryAllItems returned null. No items fetched.");
-                    Console.WriteLine("No items were retrieved.");
-                }
-                else if (!items.Any())  // Check if list is empty
-                {
-                    Log.Warning("QueryAllItems returned an empty list.");
-                    Console.WriteLine("No items found.");
-                }
-                else
-                {
-                    // Log and display fetched items
-                    foreach (var item in items)
-                    {
-                        Log.Information("Fetched Item: {Name}, Price: {Price}, Part#: {PartNumber}",
-                            item.Name, item.SalesPrice, item.ManufacturerPartNumber);
-                        Console.WriteLine($"Item Name: {item.Name}, SalesPrice: {item.SalesPrice}, ManufacturerPartNumber: {item.ManufacturerPartNumber}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error(ex, "An error occurred while querying QuickBooks items.");
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
-            finally
-            {
-                LoggerConfig.ResetLogger();
-            }
+            ItemAdder.AddItems(items);
+            Log.Information("Add operation complete.");
         }
     }
 }

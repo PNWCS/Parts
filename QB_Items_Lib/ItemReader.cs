@@ -10,10 +10,10 @@ namespace QB_Items_Lib
         {
             Log.Information("ItemReader Initialized");
 
-            List<Item> items = new List<Item>();
+            List<Item> items = new();
             bool sessionBegun = false;
             bool connectionOpen = false;
-            QBSessionManager sessionManager = null;
+            QBSessionManager? sessionManager = null;
 
             try
             {
@@ -48,11 +48,11 @@ namespace QB_Items_Lib
             catch (Exception e)
             {
                 Log.Error("Error while querying items from QuickBooks: " + e.Message);
-                if (sessionBegun)
+                if (sessionBegun && sessionManager != null)
                 {
                     sessionManager.EndSession();
                 }
-                if (connectionOpen)
+                if (connectionOpen && sessionManager != null)
                 {
                     sessionManager.CloseConnection();
                 }
@@ -78,11 +78,11 @@ namespace QB_Items_Lib
         // Process the response and map it to a list of Items
         private static List<Item> WalkItemInventoryQueryRs(IMsgSetResponse responseMsgSet)
         {
-            List<Item> items = new List<Item>();
+            List<Item> items = new();
 
             if (responseMsgSet == null) return items;
 
-            IResponseList responseList = responseMsgSet.ResponseList;
+            IResponseList? responseList = responseMsgSet.ResponseList;
             if (responseList == null) return items;
 
             for (int i = 0; i < responseList.Count; i++)
@@ -95,8 +95,11 @@ namespace QB_Items_Lib
                     ENResponseType responseType = (ENResponseType)response.Type.GetValue();
                     if (responseType == ENResponseType.rtItemInventoryQueryRs)
                     {
-                        IItemInventoryRetList ItemInventoryRet = (IItemInventoryRetList)response.Detail;
-                        items.AddRange(WalkItemInventoryRet(ItemInventoryRet));
+                        IItemInventoryRetList? ItemInventoryRet = (IItemInventoryRetList)response.Detail;
+                        if (ItemInventoryRet != null)
+                        {
+                            items.AddRange(WalkItemInventoryRet(ItemInventoryRet));
+                        }
                     }
                 }
             }
@@ -107,7 +110,7 @@ namespace QB_Items_Lib
         // Map the IItemInventoryRetList to Item objects
         private static List<Item> WalkItemInventoryRet(IItemInventoryRetList ItemInventoryRetList)
         {
-            List<Item> items = new List<Item>();
+            List<Item> items = new();
 
             if (ItemInventoryRetList == null) return items;
 
@@ -115,10 +118,10 @@ namespace QB_Items_Lib
             {
                 IItemInventoryRet itemInventoryRet = ItemInventoryRetList.GetAt(i);
 
-                string name = itemInventoryRet.Name.GetValue();
+                string name = itemInventoryRet.Name?.GetValue() ?? string.Empty;
                 decimal salesPrice = itemInventoryRet.SalesPrice != null ? (decimal)itemInventoryRet.SalesPrice.GetValue() : 0;
                 string manufacturerPartNumber = itemInventoryRet.ManufacturerPartNumber != null ? itemInventoryRet.ManufacturerPartNumber.GetValue() : "N/A";
-                string listID = itemInventoryRet.ListID.GetValue();
+                string listID = itemInventoryRet.ListID?.GetValue() ?? string.Empty;
 
                 // Create Item object and add it to the list
                 var item = new Item(name, salesPrice, manufacturerPartNumber);
