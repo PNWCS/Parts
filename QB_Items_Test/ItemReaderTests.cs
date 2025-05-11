@@ -94,8 +94,16 @@ namespace QB_Items_Test
             itemAddRq.Name.SetValue(name);
             itemAddRq.SalesPrice.SetValue((double)salesPrice);
             itemAddRq.ManufacturerPartNumber.SetValue(manufacturerPartNumber);
+
+
+            // Set the income account reference
+ 16bfe1f543f7eaf03d2c866dfb4e911722576bb2
             itemAddRq.IncomeAccountRef.FullName.SetValue("Sales");
             itemAddRq.AssetAccountRef.FullName.SetValue("Inventory Asset");
+
+
+            // Set the COGS account reference
+ 16bfe1f543f7eaf03d2c866dfb4e911722576bb2
             itemAddRq.COGSAccountRef.FullName.SetValue("Cost of Goods Sold");
 
             IMsgSetResponse responseMsgSet = qbSession.SendRequest(requestMsgSet);

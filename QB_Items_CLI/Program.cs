@@ -1,12 +1,20 @@
+
 ﻿using System;
 using QB_Items_Lib;
 using QBFC16Lib;
+using QB_Items_Lib; // Correct namespace for Item and AppConfig
+using Serilog;
+using System;
+using QB_Items_Lib;
+using QBFC16Lib;
+ d65a978 (deleted requested folder)
+ 16bfe1f543f7eaf03d2c866dfb4e911722576bb2
 
 namespace QB_Items_CLI
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             Console.WriteLine("QB Items CLI - Command Line Interface for QuickBooks Item Management");
             Console.WriteLine("=====================================================================");
@@ -27,10 +35,34 @@ namespace QB_Items_CLI
                 Console.WriteLine("Querying all items from QuickBooks...");
                 var items = ItemReader.QueryAllItems();
 
+<<<<<<< HEAD
                 Console.WriteLine("\nItems from QuickBooks:");
                 foreach (var item in items)
                 {
                     Console.WriteLine($"- {item.Name} | SalesPrice: {item.SalesPrice} | ManufacturerPartNumber: {item.ManufacturerPartNumber}");
+=======
+<<<<<<< HEAD
+                if (items == null || items.Count == 0) // Prefer Count over Any() for clarity and performance
+                {
+                    Log.Warning("No items were retrieved from QuickBooks.");
+                    Console.WriteLine("No items found.");
+                }
+                else
+                {
+                    // Log and display fetched items
+                    foreach (var item in items)
+                    {
+                        Log.Information("Fetched Item: {Name}, Price: {Price}, Part#: {PartNumber}",
+                            item.Name, item.SalesPrice, item.ManufacturerPartNumber);
+                        Console.WriteLine($"Item Name: {item.Name}, SalesPrice: {item.SalesPrice}, ManufacturerPartNumber: {item.ManufacturerPartNumber}");
+                    }
+=======
+                Console.WriteLine("\nItems from QuickBooks:");
+                foreach (var item in items)
+                {
+                    Console.WriteLine($"- {item.Name} | SalesPrice: {item.SalesPrice} | ManufacturerPartNumber: {item.ManufacturerPartNumber}");
+>>>>>>> d65a978 (deleted requested folder)
+>>>>>>> 16bfe1f543f7eaf03d2c866dfb4e911722576bb2
                 }
             }
             else if (command == "add")
@@ -89,3 +121,5 @@ namespace QB_Items_CLI
         }
     }
 }
+
+
