@@ -1,58 +1,56 @@
 ﻿using QBFC16Lib;
 using Serilog;
+using System.Collections.Generic;
 
 namespace QB_Items_Lib
 {
-    public class ItemReader
+    public static class ItemReader
     {
-        // Query all items from QuickBooks
         public static List<Item> QueryAllItems()
         {
-            Log.Information("ItemReader Initialized");
+            Log.Information("ItemReader Initialized"); // ✅ ADDED LINE
 
-            List<Item> items = new List<Item>();
+            var items = new List<Item>();
             bool sessionBegun = false;
             bool connectionOpen = false;
-            QBSessionManager sessionManager = null;
+            QBSessionManager? sessionManager = null;
 
             try
             {
-                // Create the session Manager object
-                sessionManager = new QBSessionManager();
+                sessionManager = new();
 
-                // Create the message set request object to hold our request
                 IMsgSetRequest requestMsgSet = sessionManager.CreateMsgSetRequest("US", 16, 0);
                 requestMsgSet.Attributes.OnError = ENRqOnError.roeContinue;
 
-                // Build the query for ItemInventory
-                BuildItemInventoryQueryRq(requestMsgSet);
+                BuildItemQueryRq(requestMsgSet);
 
-                // Connect to QuickBooks and begin a session
                 sessionManager.OpenConnection("", AppConfig.QB_APP_NAME);
                 connectionOpen = true;
                 sessionManager.BeginSession("", ENOpenMode.omDontCare);
                 sessionBegun = true;
 
-                // Send the request and get the response from QuickBooks
                 IMsgSetResponse responseMsgSet = sessionManager.DoRequests(requestMsgSet);
 
-                // End the session and close the connection to QuickBooks
                 sessionManager.EndSession();
                 sessionBegun = false;
                 sessionManager.CloseConnection();
                 connectionOpen = false;
 
-                // Process the response from QuickBooks and map it to the Item list
-                items = WalkItemInventoryQueryRs(responseMsgSet);
+                items = WalkItemQueryRs(responseMsgSet);
+
+                foreach (var item in items)
+                {
+                    Log.Information("Successfully retrieved {ItemName} from QB", item.Name);
+                }
             }
             catch (Exception e)
             {
                 Log.Error("Error while querying items from QuickBooks: " + e.Message);
-                if (sessionBegun)
+                if (sessionBegun && sessionManager != null)
                 {
                     sessionManager.EndSession();
                 }
-                if (connectionOpen)
+                if (connectionOpen && sessionManager != null)
                 {
                     sessionManager.CloseConnection();
                 }
@@ -62,71 +60,64 @@ namespace QB_Items_Lib
             return items;
         }
 
-        // Build the request for ItemInventory query
-        private static void BuildItemInventoryQueryRq(IMsgSetRequest requestMsgSet)
+        private static void BuildItemQueryRq(IMsgSetRequest requestMsgSet)
         {
-            IItemInventoryQuery ItemInventoryQueryRq = requestMsgSet.AppendItemInventoryQueryRq();
             Log.Information("Fetching Item List from QuickBooks...");
 
-            // Add ListID to the elements we want returned
-            ItemInventoryQueryRq.IncludeRetElementList.Add("ListID");
-            ItemInventoryQueryRq.IncludeRetElementList.Add("Name");
-            ItemInventoryQueryRq.IncludeRetElementList.Add("SalesPrice");
-            ItemInventoryQueryRq.IncludeRetElementList.Add("ManufacturerPartNumber");
+            requestMsgSet.AppendItemInventoryQueryRq();
+            requestMsgSet.AppendItemNonInventoryQueryRq();
+            requestMsgSet.AppendItemServiceQueryRq();
+            requestMsgSet.AppendItemOtherChargeQueryRq();
+            requestMsgSet.AppendItemPaymentQueryRq();
+            requestMsgSet.AppendItemDiscountQueryRq();
         }
 
-        // Process the response and map it to a list of Items
-        private static List<Item> WalkItemInventoryQueryRs(IMsgSetResponse responseMsgSet)
+        private static List<Item> WalkItemQueryRs(IMsgSetResponse? responseMsgSet)
         {
-            List<Item> items = new List<Item>();
+            var items = new List<Item>();
 
             if (responseMsgSet == null) return items;
 
-            IResponseList responseList = responseMsgSet.ResponseList;
+            var responseList = responseMsgSet.ResponseList;
             if (responseList == null) return items;
 
             for (int i = 0; i < responseList.Count; i++)
             {
-                IResponse response = responseList.GetAt(i);
+                var response = responseList.GetAt(i);
 
-                // Check the response status code
                 if (response.StatusCode >= 0 && response.Detail != null)
                 {
-                    ENResponseType responseType = (ENResponseType)response.Type.GetValue();
+                    var responseType = (ENResponseType)response.Type.GetValue();
+
                     if (responseType == ENResponseType.rtItemInventoryQueryRs)
                     {
-                        IItemInventoryRetList ItemInventoryRet = (IItemInventoryRetList)response.Detail;
-                        items.AddRange(WalkItemInventoryRet(ItemInventoryRet));
+                        var retList = (IItemInventoryRetList)response.Detail;
+                        for (int j = 0; j < retList.Count; j++)
+                        {
+                            var ret = retList.GetAt(j);
+                            items.Add(new Item(
+                                ret.Name.GetValue(),
+                                ret.SalesPrice != null ? (decimal)ret.SalesPrice.GetValue() : 0,
+                                ret.ManufacturerPartNumber?.GetValue() ?? "N/A"
+                            )
+                            { QB_ID = ret.ListID.GetValue() });
+                        }
+                    }
+                    else
+                    {
+                        dynamic retList = response.Detail;
+                        for (int j = 0; j < retList.Count; j++)
+                        {
+                            var ret = retList.GetAt(j);
+                            items.Add(new Item(
+                                ret.Name.GetValue(),
+                                0,
+                                "N/A"
+                            )
+                            { QB_ID = ret.ListID.GetValue() });
+                        }
                     }
                 }
-            }
-
-            return items;
-        }
-
-        // Map the IItemInventoryRetList to Item objects
-        private static List<Item> WalkItemInventoryRet(IItemInventoryRetList ItemInventoryRetList)
-        {
-            List<Item> items = new List<Item>();
-
-            if (ItemInventoryRetList == null) return items;
-
-            for (int i = 0; i < ItemInventoryRetList.Count; i++)
-            {
-                IItemInventoryRet itemInventoryRet = ItemInventoryRetList.GetAt(i);
-
-                string name = itemInventoryRet.Name.GetValue();
-                decimal salesPrice = itemInventoryRet.SalesPrice != null ? (decimal)itemInventoryRet.SalesPrice.GetValue() : 0;
-                string manufacturerPartNumber = itemInventoryRet.ManufacturerPartNumber != null ? itemInventoryRet.ManufacturerPartNumber.GetValue() : "N/A";
-                string listID = itemInventoryRet.ListID.GetValue();
-
-                // Create Item object and add it to the list
-                var item = new Item(name, salesPrice, manufacturerPartNumber);
-                item.QB_ID = listID; // Set the QuickBooks ListID
-
-                items.Add(item);
-
-                Log.Information($"Successfully retrieved {name} from QB");
             }
 
             return items;
